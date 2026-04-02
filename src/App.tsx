@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { SignicClient, type SignicEmail } from 'signic_sdk';
+import { SignicClient, type SignicEmail } from '@sudobility/signic_sdk';
 
 type AppState = 'connecting' | 'list' | 'detail';
 
