@@ -1,6 +1,6 @@
 {
   "name": "signic_sdk_demo",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "private": true,
   "type": "module",
   "scripts": {
@@ -14,7 +14,7 @@
     "format:check": "prettier --check \"src/**/*.{ts,tsx,js,json,css,md}\""
   },
   "dependencies": {
-    "@sudobility/signic_sdk": "^0.1.3",
+    "@sudobility/signic_sdk": "^0.1.4",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },
