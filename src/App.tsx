@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { SignicClient, type SignicEmail } from '@sudobility/signic_sdk';
 
-type AppState = 'connecting' | 'list' | 'detail';
+type AppState = 'connecting' | 'list' | 'detail' | 'compose';
 
 function createClient(): SignicClient | null {
   const privateKey = import.meta.env.VITE_PRIVATE_KEY;
@@ -28,6 +28,10 @@ function App() {
   const [totalUnread, setTotalUnread] = useState(0);
   const [selectedEmail, setSelectedEmail] = useState<SignicEmail | null>(null);
   const [loading, setLoading] = useState(false);
+  const [composeTo, setComposeTo] = useState('');
+  const [composeSubject, setComposeSubject] = useState('');
+  const [composeBody, setComposeBody] = useState('');
+  const [sending, setSending] = useState(false);
 
   const address = useRef(sharedClient?.getAddress() ?? '');
   const emailAddress = useRef(sharedClient?.getEmailAddress() ?? '');
@@ -122,6 +126,47 @@ function App() {
     setSelectedEmail(null);
     setState('list');
   }, []);
+
+  const goToCompose = useCallback(() => {
+    setComposeTo('');
+    setComposeSubject('');
+    setComposeBody('');
+    setError(null);
+    setState('compose');
+  }, []);
+
+  const isValidWalletAddress = (addr: string): boolean => {
+    const evmRegex = /^0x[0-9a-fA-F]{40}$/;
+    const solanaRegex = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+    return evmRegex.test(addr) || solanaRegex.test(addr);
+  };
+
+  const escapeHtml = (text: string): string =>
+    text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+
+  const sendEmail = useCallback(async () => {
+    if (!clientRef.current || !isValidWalletAddress(composeTo)) return;
+    setSending(true);
+    setError(null);
+    try {
+      await clientRef.current.sendEmail({
+        to: `${composeTo}@signic.email`,
+        subject: composeSubject,
+        html: `<pre>${escapeHtml(composeBody)}</pre>`,
+        text: composeBody,
+      });
+      setState('list');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to send email');
+    } finally {
+      setSending(false);
+    }
+  }, [composeTo, composeSubject, composeBody]);
 
   const formatDate = (dateStr: string) => {
     try {
@@ -229,6 +274,81 @@ function App() {
     );
   }
 
+  // Compose state
+  if (state === 'compose') {
+    const showValidationError =
+      composeTo.length > 0 && !isValidWalletAddress(composeTo);
+    const canSend =
+      isValidWalletAddress(composeTo) &&
+      composeSubject.trim().length > 0 &&
+      !sending;
+
+    return (
+      <div className="app">
+        <header className="header">
+          <h1>Signic SDK Demo</h1>
+          <div className="header-info">
+            <code>{emailAddress.current}</code>
+          </div>
+        </header>
+        <main className="main">
+          <div className="card">
+            <div className="detail-actions">
+              <button className="btn btn-secondary" onClick={backToList}>
+                &larr; Back
+              </button>
+              <button
+                className="btn btn-primary"
+                onClick={sendEmail}
+                disabled={!canSend}
+              >
+                {sending ? 'Sending...' : 'Send'}
+              </button>
+            </div>
+            {error && <div className="error">{error}</div>}
+            <div className="compose-form">
+              <div className="compose-field">
+                <label className="label">To:</label>
+                <div className="compose-to-wrapper">
+                  <input
+                    type="text"
+                    placeholder="Wallet address (EVM or Solana)"
+                    value={composeTo}
+                    onChange={(e) => setComposeTo(e.target.value.trim())}
+                  />
+                  <span className="compose-to-suffix">@signic.email</span>
+                </div>
+                {showValidationError && (
+                  <div className="validation-error">
+                    Enter a valid EVM (0x...) or Solana wallet address
+                  </div>
+                )}
+              </div>
+              <div className="compose-field">
+                <label className="label">Subject:</label>
+                <input
+                  type="text"
+                  placeholder="Email subject"
+                  value={composeSubject}
+                  onChange={(e) => setComposeSubject(e.target.value)}
+                />
+              </div>
+              <div className="compose-field">
+                <label className="label">Body:</label>
+                <textarea
+                  placeholder="Write your message..."
+                  rows={10}
+                  value={composeBody}
+                  onChange={(e) => setComposeBody(e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   // Email list state
   return (
     <div className="app">
@@ -245,6 +365,9 @@ function App() {
               {totalUnread} unread email{totalUnread !== 1 ? 's' : ''}
             </span>
             <div className="action-buttons">
+              <button className="btn btn-primary" onClick={goToCompose}>
+                Compose
+              </button>
               <button className="btn btn-secondary" onClick={sendTestEmail}>
                 Send me an email
               </button>

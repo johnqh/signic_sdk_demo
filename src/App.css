@@ -231,3 +231,60 @@ body {
   line-height: 1.6;
   color: #444;
 }
+
+.compose-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.compose-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.compose-field input,
+.compose-field textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.compose-field input:focus,
+.compose-field textarea:focus {
+  outline: none;
+  border-color: #1a1a2e;
+}
+
+.compose-to-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.compose-to-wrapper input {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  flex: 1;
+}
+
+.compose-to-suffix {
+  padding: 10px 12px;
+  background: #f0f0f0;
+  border: 1px solid #ddd;
+  border-left: none;
+  border-radius: 0 6px 6px 0;
+  font-size: 14px;
+  color: #666;
+  white-space: nowrap;
+}
+
+.validation-error {
+  font-size: 13px;
+  color: #c00;
+}
